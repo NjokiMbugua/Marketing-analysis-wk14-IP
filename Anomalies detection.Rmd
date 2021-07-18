@@ -1,0 +1,109 @@
+---
+title: "Anomalies Detection"
+author: "Njoki Mbugua"
+date: "7/18/2021"
+output: html_document
+---
+```{r}
+library(knitr)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Loading the data
+```{r}
+# data url =http://bit.ly/CarreFourSalesDataset
+sales<- read.csv('http://bit.ly/CarreFourSalesDataset',na.strings = "")
+
+```
+
+```{r}
+# printing the top six rows of the dataset
+head(sales)
+```
+
+```{r}
+# Previewing the datatypes of our data
+str(sales)
+```
+```{r}
+#checking the size/shape of a data frame
+
+dim(sales)
+```
+
+# Loading the libraries
+```{r}
+library(anomalize)
+library(lubridate)
+library(tibbletime)
+library(timetk)
+library(tidyverse)
+```
+# Data Cleaning
+```{r}
+# Checking for missing values
+is.null(sales)
+```
+There are no missing values.
+
+```{r}
+# checking for duplicates
+anyDuplicated(sales)
+```
+There are no duplicated values.
+
+```{r}
+# Checking for outliers
+#boxplot(sales)
+```
+Few outliers have been detected in the sales column
+
+# Implementing the solution
+```{r}
+# changing date column to date type
+sales$Date <- as.Date(sales$Date, format = "%m/%d/%y")
+sales$Date <- as.POSIXct(sales$Date)
+```
+
+```{r}
+# Changing the dataframe to tibble
+
+df <- as_tibble(sales)
+class(df)
+```
+
+```{r}
+# Previewing our tibble
+head(df)
+```
+
+```{r}
+# Checking for any null values
+is.null(df)
+df <- na.omit(df) 
+```
+
+```{r}
+# Using timetk to detect and visualize any anomalies.
+df %>% timetk::plot_anomaly_diagnostics(Date,Sales, .facet_ncol = 2)
+```
+
+```{r}
+# To find the exact data points that are anomalies, we use tk_anomaly_diagnostics() function.
+
+df <- df %>% timetk::tk_anomaly_diagnostics(Date,Sales) %>% filter(anomaly=='Yes')
+
+df
+```
+The frequency is 11 observations per hour and a trend of 20 observations per 12 hours. The we conclude that there were no no anomalies on the sales trends.
+```{r}
+# Using the anomalized package to detect anomalies.
+#df_anomalized <- df %>%
+#    time_decompose(Sales, merge = TRUE) %>%
+#    anomalize(remainder) %>%
+# #   time_recompose()
+#df_anomalized %>% glimpse()
+```
+

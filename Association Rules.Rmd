@@ -1,0 +1,171 @@
+---
+title: "Week 14 IP Associatiative Rules"
+author: "Njoki Mbugua"
+date: "7/17/2021"
+output: html_document
+---
+```{r}
+library(knitr)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#  Defining the Question
+## a) Specifying the Question
+The objective of this project is to create association rules that will allow you to identify relationships between variables in the dataset.
+## b) Defining the Metric for Success
+Exhaustively performing associative analysis without any errors.
+
+## c) Understanding the context
+Working as a consultant Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax).This project endeavors to  explore a recent marketing dataset by performing associative analysis to determine customer shopping patterns and later provide recommendations based on insights from the analysis.
+
+## d) Recording the experimental design
+Importing and reading the data
+Data Cleaning
+Perform associative analysis
+Conclusions and recommendations
+
+## e) Data Relevance
+The data was provided by the company (http://bit.ly/SupermarketDatasetII). It has information on products purchased by customers over a span of time.
+
+# Loading and previewing the data
+```{r}
+#First we call the arules library
+#
+library(arules)
+library(tidyverse)
+library(ggplot2)
+
+```
+
+```{r}
+# We use the read.transactions function to load the data
+
+url <- "http://bit.ly/SupermarketDatasetII"
+
+df <- read.transactions ('http://bit.ly/SupermarketDatasetII',sep = ",")
+df
+
+```
+
+```{r}
+# Previewing the top 5 rows of the dataset
+head(df)
+```
+
+```{r}
+# Verifying the object's class
+class(df)
+```
+
+```{r}
+# Previewing our first 5 transactions
+
+inspect(df[1:5])
+```
+
+```{r}
+# Previewing the items that make up the dataset
+items<-as.data.frame(itemLabels(df))
+colnames(items) <- "Item"
+head(items, 10)
+```
+
+```{r}
+# Generating a summary of the dataset to view the most purchased items
+
+summary(df)
+
+```
+
+
+```{r}
+# Exploring the frequency of some articles 
+itemFrequency(df[, 8:10],type = "absolute")
+
+```
+The top three frequently purchased items are black tea,blue berries and body spray.
+```{r}
+# Exploring the frequency of some articles
+round(itemFrequency(df[, 8:10],type = "relative")*100,2)
+```
+
+```{r}
+# Producing a chart of frequencies 
+# Displaying top 10 most common items in the transactions dataset and the items whose relative importance is at least 10%
+par(mfrow = c(1, 2))
+
+# plot the frequency of items
+itemFrequencyPlot(df, topN = 10,col="cyan")
+itemFrequencyPlot(df, support = 0.1,col="blue")
+```
+The graphs present the top most items on the transactions.
+```{r}
+# Building a model based on association rules using the apriori function 
+# We use Min Support as 0.001 and confidence as 0.8
+rules <- apriori (df, parameter = list(supp = 0.001, conf = 0.8,maxlen=10))
+rules
+
+```
+We obtain a set of 74 rules.
+
+```{r}
+
+summary(rules) 
+```
+
+```{r}
+# Observing first 5 model rules 
+inspect(rules[1:5])
+```
+Interpreting the top five rules:
+a. If someone buys frozen smoothie and spinach, they are 88% likely to buy mineral water too
+b. If someone buys bacon and pancakes, they are 81% likely to buy spaghetti too
+c. If someone buys nonfat milk and turkey, they are 82% likely to buy mineral water too
+d. If someone buys ground beef and nonfat milk, they are 86% likely to buy mineral water too
+e. If someone buys frozen mushroom cream sauce and pasta, they are 95% likely to buy escalope too
+```{r}
+# Ordering these rules by a criteria such as the level of confidence
+rules<-sort(rules, by="confidence", decreasing=TRUE)
+inspect(rules[1:5])
+```
+Interpretation:
+All the five rules have a confidence of 100.
+
+```{r}
+# creating a subset of rules for mineral water
+milk.rules <- apriori(df, parameter = list(supp=0.001, conf=0.8),appearance = list(default="lhs",rhs="milk"))
+```
+
+
+```{r}
+# Finding probability of how many customers buy milk
+inspect(head(milk.rules))
+```
+Interpretation:
+a. There is 82% chance that customers who bought black tea and smoothies also bought milk.
+b. The probability of customers who bought meatballs and whole wheat pasta buying milk was 83%.
+c. Customers who bought cake, meatballs and mineral water  will also by 100% chance purchase milk.
+
+```{r}
+# Visualizing the rules
+# First filter rules with confidence greater than 0.5 or 50%
+subrules <- rules[quality(rules)$confidence>0.5]
+```
+
+```{r}
+library(arulesViz)
+#Plot SubRules
+plot(subrules)
+```
+From the plot we observe that rules with high lift have low support.
+
+```{r}
+subrules <- head(rules, n = 10, by = "confidence")
+
+plot(subrules, method = "graph",  engine = "htmlwidget")
+```
+This graph shows associations between selected top ten items. Larger circles imply higher support, while red circles imply higher lift. 
+

@@ -1,0 +1,123 @@
+---
+title: "Week 14 IP Feature Selection"
+author: "Njoki Mbugua"
+date: "7/17/2021"
+output: html_document
+---
+```{r}
+library(knitr)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#  Defining the Question
+## a) Specifying the Question
+The objective of this project is to create perform feature selection by employing several to identify variables in the dataset that are relevant for prediction.
+
+### b) Defining the Metric for Success
+Successfully implement different feature selection methods.
+
+### c) Understanding the context
+Working as a consultant Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax).This project endeavors to  explore a recent marketing dataset and perform feature selection to determine the features that are best suited for analysis.
+
+### d) Recording the experimental design
+Importing and reading the data
+Data Cleaning
+Implement feature selection techniques
+Conclusions and recommendations
+
+### e) Data Relevance
+The data was provided by the company(http://bit.ly/CarreFourDataset).
+
+```{r}
+data = read.csv('http://bit.ly/CarreFourDataset',na.strings = "")
+```
+
+
+```{r}
+head(data,n=5)
+```
+
+```{r}
+# Installing the caret package and calling the library
+suppressWarnings(
+        suppressMessages(if
+                         (!require(caret, quietly=TRUE))
+                install.packages("caret")))
+library(caret)
+```
+
+
+```{r}
+# Calling the corrplot library
+suppressWarnings(
+        suppressMessages(if
+                         (!require(corrplot, quietly=TRUE))
+                install.packages("corrplot")))
+library(corrplot)
+```
+
+```{r}
+library(ggbiplot)
+library("factoextra")
+library(devtools)
+library(plyr)
+library(dplyr)
+```
+
+```{r}
+# Selecting numeric column
+df <- select_if(data, is.numeric)             
+head(df)
+```
+```{r}
+# Viewing the columns
+colnames(df)
+```
+```{r}
+# Removing columns with zero variance since we are getting an error that standard deviation is zero when calculating correlation
+df2 <- df[,apply(df, 2, var, na.rm=TRUE) != 0]
+```
+
+```{r}
+# Calculating the correlation matrix
+
+corrMatrix <- cor(df2, method = "pearson",use = "complete.obs")
+```
+
+
+```{r}
+# Find attributes that are highly correlated
+
+highlyCorrelated <- findCorrelation(corrMatrix, cutoff=0.75)
+```
+
+```{r}
+# Highly correlated attributes
+# ---
+# 
+highlyCorrelated 
+names(df2[,highlyCorrelated])
+```
+The cogs, total and tax columns are highly correlated.
+```{r}
+# Removing Redundant(highly correlated) Features 
+# ---
+# 
+df3<-df2[-highlyCorrelated]
+head(df3)
+```
+
+```{r}
+# Performing our graphical comparison
+
+par(mfrow = c(1, 2))
+corrplot(corrMatrix, order = "hclust")
+corrplot(cor(df3), order = "hclust")
+
+```
+The graphs show the correlation between variables.
+Graph two shows the final features after dropping the highly correlated ones. Thus we can conclude that the most important features are gross income, quantity, unit price and rating.
+
+`

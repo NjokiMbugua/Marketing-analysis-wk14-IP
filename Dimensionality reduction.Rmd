@@ -1,0 +1,185 @@
+---
+title: "Week 14 IP dimensionality reduction"
+author: "Njoki Mbugua"
+date: "7/16/2021"
+output: html_document
+---
+```{r}
+library(knitr)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#  Defining the Question
+## a) Specifying the Question
+The objective of this project is to create perform dimensionality reduction by employing the Principal Component Analysis(PCA) method.
+### b) Defining the Metric for Success
+Successfully implement PCA without errors.
+
+### c) Understanding the context
+Working as a consultant Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax).This project endeavors to  explore a recent marketing dataset and perform dimensionality reduction using PCA method to determine the most important features that are best suited for predictive analysis.
+
+### d) Recording the experimental design
+Importing and reading the data
+Data Cleaning
+Implementing PCA.
+Conclusions and recommendations
+
+### e) Data Relevance
+The data was provided by the company(http://bit.ly/CarreFourDataset) from a recent marketing dataset.
+
+# Loading and reading the data
+```{r}
+# Data url=http://bit.ly/CarreFourDataset
+
+data = read.csv('http://bit.ly/CarreFourDataset',na.strings = "")
+```
+
+```{r}
+# previewing the top 5 rows of the dataset
+head(data,n=5)
+```
+Loading the necessary libraries
+```{r}
+library(ggbiplot)
+library("factoextra")
+library(devtools)
+library(dplyr)
+```
+
+```{r}
+# previewing the last five rows of the dataset
+tail(data, n = 5)
+```
+
+```{r}
+# checking the number of rows and columnsin the dataset
+dim(data)
+
+# the dataframe has 1000 rows and 16 columns
+```
+
+```{r}
+# checking structure of the dataset
+str(data)
+```
+
+```{r}
+# previewing the column names
+colnames(data)
+
+```
+
+```{r}
+# previewing the datatypes of the dataset columns
+sapply(data,class)
+
+```
+# Data cleaning
+
+```{r}
+# checking for missing values
+sum(is.na(data))
+```
+There are no missing values in the data set.
+```{r}
+# Checking for duplicated(data)
+sum(duplicated(data))
+```
+There are no duplicates in the data set.
+
+```{r}
+
+# Selecting numeric column
+df <- select_if(data, is.numeric)             
+df
+```
+
+```{r}
+# Using the boxplot to detect outliers in the numeric columns
+boxplot(df)
+```
+Outliers were detected in the tax,cogs,gross income and total columns.
+
+```{r}
+# listing outliers
+boxplot.stats(df$Tax)$out
+boxplot.stats(df$cogs)$out
+boxplot.stats(df$gross.income)$out
+boxplot.stats(df$Total)$out
+```
+The outliers were not removed since the values for this columns may vary extremely meaning that they are valid and important for analysis.
+
+
+# Dimensionality reduction using PCA
+
+```{r}
+# Since PCA works on numeric variables lets view the numeric columns
+head(df,n=3)
+```
+
+```{r}
+# We then pass df to the prcomp().
+df.pca <- prcomp(df,center=TRUE)
+```
+
+```{r}
+# then preview our object with summary
+summary(df.pca)
+```
+PCA works by trying to maximize the variance of the components.The summary shows the variance of eight principal components. PC1 explains almost the total variance of the dataset (99.6%). Some of the columns have zero variance.
+
+```{r}
+# Removing columns with zero variance
+df2 <- df[,apply(df, 2, var, na.rm=TRUE) != 0]
+```
+
+```{r}
+# Viewing the structure of the filtered dataset
+str(df2)
+```
+
+```{r}
+# We then pass df to the prcomp() with arguments center and scale. as True
+df2.pca <- prcomp(df2,center=TRUE,scale. = T)
+```
+
+```{r}
+# then preview our object with summary
+summary(df2.pca)
+```
+From the summary, we can see we have four principal components with PC1 having a variance of 70%, PC2 and PC3 about 14% and PC4 about 1%.
+```{r}
+#Calling str() to have a look at the PCA object
+
+str(df2.pca)
+```
+```{r}
+#Visualizing eigenvalues usingscree plot.
+library(factoextra)
+fviz_eig(df2.pca)
+```
+The graph shows the percentage variance explained by each principal component.
+```{r}
+# plotting the two most important principal components to deduce some insights
+ggbiplot(df2.pca)
+```
+
+```{r}
+# Adding more detail to the plot by adding idividual variables and plotting using factorextra
+# 
+fviz_pca_biplot(df2.pca, repel = TRUE,
+                col.var = "#2E9FDF",
+                col.ind = "#696969" 
+                )
+```
+This produces a scatter plot with all variables.Variables that are similar are grouped together.
+
+```{r}
+# Hiding the variable values to make it easy to view the vectors
+biplot(df2.pca, xlabs = rep("", nrow(df2)))
+```
+The four principal components are gross income,quantity, unit price and rating.
+
+
